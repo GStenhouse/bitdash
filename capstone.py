@@ -67,7 +67,70 @@ def get_data():
         dataframe = pd.DataFrame(data, columns = cols)
 
     return dataframe
-    
+
+# function to identify when SMA lines cross each other
+@st.cache_data
+def sma_cross(s_day, l_day, n_days, data):
+    # get data for last number of specified days
+    temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','sma_20d', 'sma_50d', 'sma_100d', 'sma_200d']].dropna(inplace=False).reset_index()
+
+    # set up counts and lists
+    diff = []
+    up_count = 0
+    down_count = 0
+
+    # cycle through data to find when SMAs cross
+    # output message when this happens
+    for i in range(0, len(temp_df)):
+        diff.append(temp_df[f'sma_{s_day}d'].iloc[i] - temp_df[f'sma_{l_day}d'].iloc[i])
+        for i in range(0, len(diff)-1):
+            if diff[i] > 0 and diff[i + 1] < 0:
+                down_count += 1
+            elif diff[i] < 0 and diff[i + 1] > 0:
+                up_count += 1
+
+    # output message based on counts
+    if up_count != 0 and down_count != 0:
+        sma_container.write(f'{s_day} day SMA has been below {l_day} day SMA {down_count} days in the last {n_days} days, indicating a bearish signal. But has also been above {l_day} day SMA {up_count} days in the last {n_days}  days, indicating a bullish signal.')
+    elif up_count == 0 and down_count != 0:
+        sma_container.write(f'{s_day} day SMA has been below {l_day} day SMA {down_count} days in the last {n_days}  days, indicating a bearish signal.')
+    elif up_count != 0 and down_count == 0:
+        sma_container.write(f'{s_day} day SMA has been above {l_day} day SMA {up_count} days in the last {n_days}  days, indicating a bullish signal.')
+    else:
+        sma_container.write(f'day {s_day} and day {l_day} SMAs have not crossed in the last {n_days} days.')
+
+
+# function to identify when SMA lines cross each other
+@st.cache_data
+def ema_cross(s_day, l_day, n_days, data):
+    # get data for last number of specified days
+    temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','ema_9d', 'ema_12d', 'ema_26d']].dropna(inplace=False).reset_index()
+
+    # set up counts and lists
+    diff = []
+    up_count = 0
+    down_count = 0
+
+    # cycle through data to find EMAs cross
+    # output message when this happens
+    for i in range(0, len(temp_df)):
+        diff.append(temp_df[f'ema_{s_day}d'].iloc[i] - temp_df[f'ema_{l_day}d'].iloc[i])
+        for i in range(0, len(diff)-1):
+            if diff[i] > 0 and diff[i + 1] < 0:
+                down_count += 1
+            elif diff[i] < 0 and diff[i + 1] > 0:
+                up_count += 1
+
+    # output message based on counts
+    if up_count != 0 and down_count != 0:
+        ema_container.write(f'{s_day} day EMA has been below {l_day} day EMA {down_count} days in the last {n_days} days, indicating a bearish signal. But has also been above {l_day} day EMA {up_count} days in the last {n_days} days, indicating a bullish signal.')
+    elif up_count == 0 and down_count != 0:
+        ema_container.write(f'{s_day} day EMA has been below {l_day} day EMA {down_count} days in the last {n_days} days, indicating a bearish signal.')
+    elif up_count != 0 and down_count == 0:
+        ema_container.write(f'{s_day} day EMA has been above {l_day} day EMA {up_count} days in the last {n_days} days, indicating a bullish signal.')
+    else:
+        ema_container.write(f'day {s_day} and day {l_day} EMAs have not crossed in the last {n_days} days.')
+ 
 
 ###########################
 # Collect and update data #
@@ -160,6 +223,7 @@ else:
 curr_data = get_data()
 curr_data = curr_data.sort_values('date', ascending = True)
 
+
 ##################
 # Visualisations #
 ##################
@@ -197,7 +261,7 @@ fig.update_layout(
     legend=dict(orientation="h"),
     plot_bgcolor="white",
     autosize=False,
-    width=1130,
+    width=1400,
     height=500,
     margin=dict(t=10,l=20,b=10,r=20)
 )
@@ -208,10 +272,13 @@ with st.container(border = True):
     col1, col2, col3, col4 = st.columns(4)
     with col1: 
         open = st.checkbox('Show open price', value = True)
+
     with col2: 
         close = st.checkbox('Show close price')
+
     with col3: 
         high = st.checkbox('Show high price')
+
     with col4:
         low = st.checkbox('Show low price')
 
@@ -233,14 +300,14 @@ container.plotly_chart(fig)
 st.subheader('Technical Indicators')
 
 # put in tabs so can easily see each chart compared to the main chart
-tab1, tab2, tab3, tab4 = st.tabs(["Relative Strength Index", "Simple Moving Average", "Exponential Moving Average", "Stochastic Oscilator"])
+tab1, tab2, tab3, tab4 = st.tabs(["Relative Strength Index", "Stochastic Oscilator", "Simple Moving Average", "Exponential Moving Average"])
 
 # Set up common figure parameters
-params = {'figure.figsize': (6, 2),
+params = {'figure.figsize': (7.7, 1.9),
          'axes.labelsize': 4,
          'xtick.labelsize': 4,
          'ytick.labelsize': 4,
-         'lines.linewidth': 0.9,
+         'lines.linewidth': 0.6,
          'xtick.major.width': 0.5,
          'ytick.major.width': 0.5}
 plt.rcParams.update(params)
@@ -248,19 +315,20 @@ plt.rcParams.update(params)
 ## RSI
 # set base plot
 with tab1:
-    fig, ax = plt.subplots(figsize=(6, 1.5), dpi = 100)
+    fig, ax = plt.subplots(figsize = (7.5, 2), dpi = 100)
     plt.setp(ax.spines.values(), linewidth=0.4)
 
     ax.set_xlim(date_range[0] - timedelta(days=5), date_range[1] + timedelta(days=5))
     ax.set_ylim(0, 100)
 
     # add line for RSI and 70 and 30 thresholds
-    sns.lineplot(data=curr_data, x='date', y='rsi', color = 'red', linewidth = 0.6)
-    sns.lineplot(x=curr_data['date'], y=70, color = 'slategray', linewidth = 0.6)
-    sns.lineplot(x=curr_data['date'], y=30, color = 'slategray', linewidth = 0.6)
+    sns.lineplot(data=curr_data, x='date', y='rsi', color = 'red')
+    sns.lineplot(x=curr_data['date'], y=70, color = 'slategray')
+    sns.lineplot(x=curr_data['date'], y=30, color = 'slategray')
 
     ax.lines[1].set_linestyle("--")
     ax.lines[2].set_linestyle("--")
+
 
     plt.text(date_range[1] + timedelta(days=7), 67, 'Overbought', color = 'slategray', size = 5)
     plt.text(date_range[1] + timedelta(days=7), 27, 'Oversold', color = 'slategray', size = 5)
@@ -276,12 +344,13 @@ with tab1:
 
     # add expander for further details on relative strength index
     with st.expander(r"$\textsf{\large Further details}$"):
-        st.write("Insert description of RSI here")
+        st.write("RSI is a momentum oscillator that measures the speed and change of price movements. It ranges from 0 to 100.")
+        st.write("Typically **readings above 70** indicate *overbought* conditions, while **readings below 30** suggest *oversold* conditions. An overbought condition suggests that buying pressure has become excessive, and the asset may be due for a correction or a pullback in price. While an oversold condition suggests that selling pressure has become excessive, and the asset may be due for a rebound or a rally in price.")
 
 
 ## Stochastic Oscillator
 with tab2:
-    fig, ax = plt.subplots(figsize=(6, 1.5), dpi = 100)
+    fig, ax = plt.subplots(dpi = 100)
     plt.setp(ax.spines.values(), linewidth=0.4)
 
     ax.set_xlim(date_range[0] - timedelta(days=5), date_range[1] + timedelta(days=5))
@@ -289,10 +358,10 @@ with tab2:
 
     # add fast and slow stochastic oscillator lines and 70 and 30 thresholds
     palette = sns.color_palette("YlOrBr_r", 5)
-    sns.lineplot(data=curr_data, x='date', y='stoch_slowk', color = palette[1], linewidth = 0.6)
-    sns.lineplot(data=curr_data, x='date', y='stoch_slowd', color = palette[3], linewidth = 0.6)
-    sns.lineplot(x=curr_data['date'], y=80, color = 'slategray', linewidth = 0.6)
-    sns.lineplot(x=curr_data['date'], y=20, color = 'slategray', linewidth = 0.6)
+    sns.lineplot(data=curr_data, x='date', y='stoch_slowk', color = palette[1])
+    sns.lineplot(data=curr_data, x='date', y='stoch_slowd', color = palette[3])
+    sns.lineplot(x=curr_data['date'], y=80, color = 'slategray')
+    sns.lineplot(x=curr_data['date'], y=20, color = 'slategray')
 
     ax.lines[2].set_linestyle("--")
     ax.lines[3].set_linestyle("--")
@@ -314,12 +383,14 @@ with tab2:
 
     # add expander for further details on Stochastic Oscillator
     with st.expander(r"$\textsf{\large Further details}$"):
-        st.write("Insert description of Stoch here")
+        st.write("The Stochastic Oscillator is another momentum oscillator used by traders to identify potential trend reversals or overbought/oversold conditions in the market. Like the RSI, it oscillates between 0 and 100 and is based on the relationship between a security's closing price and its price range over a specific period of time. ")
+        st.write('**Readings above 80** typically indicate *overbought* conditions, suggesting that the asset may be due for a pullback or reversal. Conversely, **readings below 20** typically indicate *oversold* conditions, suggesting that the asset may be due for a bounce or reversal. However, it\'s essential to note that overbought and oversold conditions can persist in strong trending markets')
+
 
 
 ## Simple Moving Averages
 with tab3:
-    fig, ax = plt.subplots(figsize=(6, 1.6), dpi = 100)
+    fig, ax = plt.subplots(dpi = 100)
     plt.setp(ax.spines.values(), linewidth=0.4)
 
     ax.set_xlim(date_range[0] - timedelta(days=5), date_range[1] + timedelta(days=5))
@@ -327,10 +398,10 @@ with tab3:
 
     # add line for each SMA
     palette = sns.color_palette("viridis_r", 4)
-    sns.lineplot(data=curr_data, x='date', y='sma_20d', color = palette[0], linewidth = 0.6)
-    sns.lineplot(data=curr_data, x='date', y='sma_50d', color = palette[1], linewidth = 0.6)
-    sns.lineplot(data=curr_data, x='date', y='sma_100d', color = palette[2], linewidth = 0.6)
-    sns.lineplot(data=curr_data, x='date', y='sma_200d', color = palette[3], linewidth = 0.6)
+    sns.lineplot(data=curr_data, x='date', y='sma_20d', color = palette[0])
+    sns.lineplot(data=curr_data, x='date', y='sma_50d', color = palette[1])
+    sns.lineplot(data=curr_data, x='date', y='sma_100d', color = palette[2])
+    sns.lineplot(data=curr_data, x='date', y='sma_200d', color = palette[3])
 
     # add text to show which line is which
     plt.text(date_range[1] + timedelta(days=7), curr_data['sma_20d'].max() - ((curr_data['sma_20d'].max() - curr_data['sma_20d'].min()) / 8), "20 day", color = palette[0], size = 5)
@@ -349,12 +420,18 @@ with tab3:
 
     # add expander for further details on simple moving averages
     with st.expander(r"$\textsf{\large Further details}$"):
-        st.write("Insert description of SMA here")
+        st.write("SMA is calculated by summing up the closing prices of a security over a specified period and then dividing it by the number of periods. It provides a smoothed average price over the chosen time frame.")
+        st.write('**Dual moving average crossover:** This strategy involves using two SMAs of different periods, such as a short-term SMA (e.g., 20-day) and a long-term SMA (e.g., 50-day). Traders look for crossovers between these two moving averages to generate buy or sell signals.')
+        st.write('**Golden cross:** This occurs when the short-term SMA crosses above the long-term SMA. This is considered a *bullish* signal.')
+        st.write('**Death cross:** This occurs when the short-term SMA crosses below the long-term SMA. This is considered a *bearish* signal.')
+        st.write('**Moving average ribbon:** This involves plotting multiple SMAs of different periods on the same chart to visualize the trend strength and direction. The spacing between the SMAs can indicate the strength of the trend, with wider spacing suggesting stronger momentum.')
+        st.write('A **bullish** signal, in the short term, may indicate an opportunity for traders to buy or enter long positions, expecting prices to rise.')
+        st.write('A **bearish** signal, in the short term, may indicate an opportunity for traders to sell or enter short positions, expecting prices to fall.')
 
 
 ## Exponential  Moving Averages
 with tab4:
-    fig, ax = plt.subplots(figsize=(6, 1.6), dpi = 100)
+    fig, ax = plt.subplots(dpi = 100)
     plt.setp(ax.spines.values(), linewidth=0.4)
 
     ax.set_xlim(date_range[0] - timedelta(days=5), date_range[1] + timedelta(days=5))
@@ -362,9 +439,9 @@ with tab4:
 
     # add line for each SMA
     palette = sns.color_palette("cubehelix", 4)
-    sns.lineplot(data=curr_data, x='date', y='ema_9d', color = palette[0], linewidth = 0.6)
-    sns.lineplot(data=curr_data, x='date', y='ema_12d', color = palette[1], linewidth = 0.6)
-    sns.lineplot(data=curr_data, x='date', y='ema_26d', color = palette[2], linewidth = 0.6)
+    sns.lineplot(data=curr_data, x='date', y='ema_9d', color = palette[0])
+    sns.lineplot(data=curr_data, x='date', y='ema_12d', color = palette[1])
+    sns.lineplot(data=curr_data, x='date', y='ema_26d', color = palette[2])
 
     # add text to show which line is which
     plt.text(date_range[1] + timedelta(days=7), curr_data['ema_9d'].max() - ((curr_data['ema_9d'].max() - curr_data['ema_9d'].min()) / 8), "9 day", color = palette[0], size = 5)
@@ -377,21 +454,87 @@ with tab4:
     st.pyplot(fig.figure)
     plt.close()
 
-    # add container for recommendations
+    # add container for predictions
     ema_container = st.container()
 
     # add expander for further details on exponential moving averages
     with st.expander(r"$\textsf{\large Further details}$"):
-        st.write("Insert description of EMA here")
+        st.write("Similar to SMA, EMA also provides a smoothed average price over a chosen time frame. EMA, however, gives more weight to recent prices, making it more responsive to price changes compared to SMAs. This responsiveness makes EMAs more suitable for short-term trading.")
+        st.write('**Dual moving average crossover:** This strategy involves using two SMAs of different periods, such as a short-term SMA (e.g., 20-day) and a long-term SMA (e.g., 50-day). Traders look for crossovers between these two moving averages to generate buy or sell signals.')
+        st.write('**Golden cross:** This occurs when the short-term SMA crosses above the long-term SMA. This is considered a *bullish* signal.')
+        st.write('**Death cross:** This occurs when the short-term SMA crosses below the long-term SMA. This is considered a *bearish* signal.')
+        st.write('**Moving average ribbon:** This involves plotting multiple SMAs of different periods on the same chart to visualize the trend strength and direction. The spacing between the SMAs can indicate the strength of the trend, with wider spacing suggesting stronger momentum.')
+        st.write('A **bullish** signal, in the short term, may indicate an opportunity for traders to buy or enter long positions, expecting prices to rise.')
+        st.write('A **bearish** signal, in the short term, may indicate an opportunity for traders to sell or enter short positions, expecting prices to fall.')
 
 
-## Trading Recommendations ##
-## RSI based recommendations
-        
 
-## Display trading recommendations ##
+## Trading Predictions ##
 ## Headers
-rsi_container.write(r"$\textsf{\large RSI Recommendations}$")
-sma_container.write(r"$\textsf{\large SMA Recommendations}$")
-ema_container.write(r"$\textsf{\large EMA Recommendations}$")
-osc_container.write(r"$\textsf{\large Stochastic Oscilator Recommendations}$")
+rsi_container.write(r"$\textsf{\large RSI Predictions}$")
+sma_container.write(r"$\textsf{\large SMA Predictions}$")
+ema_container.write(r"$\textsf{\large EMA Predictions}$")
+osc_container.write(r"$\textsf{\large Stochastic Oscilator Predictions}$")
+
+# add number inputs for user to change the number of days to look back
+rsi_days = rsi_container.number_input('Number of days to look back on RSI:', min_value=1, max_value=100, value=20)
+osc_days = osc_container.number_input('Number of days to look back on Stochastic Oscillator:', min_value=1, max_value=100, value=20)
+sma_days = sma_container.number_input('Number of days to look back on SMA:', min_value=1, max_value=100, value=60)
+ema_days = ema_container.number_input('Number of days to look back on EMA:', min_value=1, max_value=100, value=60)
+
+## RSI based predictions
+if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=rsi_days)][curr_data['rsi'] > 70].dropna(inplace=False)) != 0:
+    rsi_container.write(f'RSI has been above 70 in the last {rsi_days} days, indicating that the asset is overbought. Overbought assets are likely to experience a price decline in the near future.')
+
+if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=rsi_days)][curr_data['rsi'] < 30].dropna(inplace=False)) != 0:
+    rsi_container.write(f'RSI has been below 30 in the last {rsi_days} days, indicating that the asset is oversold. Oversold assets are likely to experience a price increase in the near future.')
+
+if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=rsi_days)][curr_data['rsi'] < 30].dropna(inplace=False)) == 0 and len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['rsi'] > 70].dropna(inplace=False)) == 0:
+    rsi_container.write(f'RSI has been between 30 and 70 in the last {rsi_days} days, indicating that the asset is neither overbought nor oversold. No clear trading signal is given.')
+
+    
+# Stochastic Oscillator based prdeictions
+if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=osc_days)][curr_data['stoch_slowk'] > 70].dropna(inplace=False)) != 0 or len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['stoch_slowd'] > 70].dropna(inplace=False)) != 0:
+    osc_container.write(f'Fast and/or slow stochastic oscillator have been above 70 in the last {osc_days} days, indicating that the asset is overbought. Overbought assets are likely to experience a price decline in the near future.')
+
+if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=osc_days)][curr_data['stoch_slowk'] < 30].dropna(inplace=False)) != 0 or len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['stoch_slowd'] < 30].dropna(inplace=False)) != 0:
+    osc_container.write(f'Fast and/or slow stochastic oscillator have been below 30 in the last {osc_days} days, indicating that the asset is oversold. Oversold assets are likely to experience a price increase in the near future.')
+
+if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=osc_days)][curr_data['stoch_slowk'] > 70].dropna(inplace=False)) == 0 and len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['stoch_slowd'] > 70].dropna(inplace=False)) == 0 and len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['stoch_slowk'] < 30].dropna(inplace=False)) == 0 and len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['stoch_slowd'] < 30].dropna(inplace=False)) == 0:
+    osc_container.write(f'Fast and slow stochastic oscillator have been between 30 and 70 in the last {osc_days} days, indicating that the asset is neither overbought nor oversold. No clear trading signal is given.')
+
+
+# SMA based predictions
+# day 20 vs day 50
+sma_container.write(r"$\textsf{20 day vs 50 day}$")
+sma_cross(20, 50, sma_days, curr_data)
+
+# day 20 vs day 100
+sma_container.write(r"$\textsf{20 day vs 100 day}$")
+sma_cross(20, 100, sma_days, curr_data)
+
+# day 20 vs day 200
+sma_container.write(r"$\textsf{20 day vs 200 day}$")
+sma_cross(20, 200, sma_days, curr_data)
+
+# day 50 vs day 100
+sma_container.write(r"$\textsf{50 day vs 100 day}$")
+sma_cross(50, 100, sma_days, curr_data)
+
+# day 50 vs day 200
+sma_container.write(r"$\textsf{50 day vs 200 day}$")
+sma_cross(50, 200, sma_days, curr_data)
+
+
+# EMA based predictions
+# day 9 vs day 12
+ema_container.write(r"$\textsf{9 day vs 12 day}$")
+ema_cross(9, 12, ema_days, curr_data)
+
+# day 9 vs day 26
+ema_container.write(r"$\textsf{9 day vs 26 day}$")
+ema_cross(9, 26, ema_days, curr_data)
+
+# day 12 vs day 26
+ema_container.write(r"$\textsf{12 day vs 26 day}$")
+ema_cross(12, 26, ema_days, curr_data)
