@@ -1,7 +1,6 @@
 psycopg2-binary
 datetime
-alpha_vantage.cryptocurrencies
-alpha_vantage.techindicators
+alpha_vantage
 pandas
 matplotlib.pyplot
 plotly.express
