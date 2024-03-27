@@ -1,5 +1,4 @@
 psycopg2-binary
-psycopg2.extras
 datetime
 alpha_vantage.cryptocurrencies
 alpha_vantage.techindicators
