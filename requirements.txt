@@ -1,4 +1,4 @@
-import psycopg2
+import psycopg2-binary
 import psycopg2.extras as extras
 from datetime import datetime, timedelta
 from alpha_vantage.cryptocurrencies import CryptoCurrencies
