@@ -71,7 +71,7 @@ def get_data():
 # function to identify when SMA lines cross each other
 def sma_cross(s_day, l_day, n_days, data):
     # get data for last number of specified days
-    temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','sma_20d', 'sma_50d', 'sma_100d', 'sma_200d']].dropna(inplace=False)
+    temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','sma_20d', 'sma_50d', 'sma_100d', 'sma_200d']].dropna(inplace=False).reset_index()
 
     # set up counts and lists
     diff = []
@@ -102,7 +102,7 @@ def sma_cross(s_day, l_day, n_days, data):
 # function to identify when EMA lines cross each other
 def ema_cross(s_day, l_day, n_days, data):
     # get data for last number of specified days
-    temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','ema_9d', 'ema_12d', 'ema_26d']].dropna(inplace=False)
+    temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','ema_9d', 'ema_12d', 'ema_26d']].dropna(inplace=False).reset_index()
 
     # set up counts and lists
     diff = []
@@ -466,7 +466,7 @@ with tab4:
         st.write('A **bearish** signal, in the short term, may indicate an opportunity for traders to sell or enter short positions, expecting prices to fall.')
 
 
-
+#########################
 ## Trading Predictions ##
 ## Headers
 rsi_container.write(r"$\textsf{\large RSI Predictions}$")
@@ -481,24 +481,27 @@ sma_days = sma_container.number_input('Number of days to look back on SMA:', min
 ema_days = ema_container.number_input('Number of days to look back on EMA:', min_value=1, max_value=100, value=60)
 
 ## RSI based predictions
-if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=rsi_days)][curr_data['rsi'] > 70].dropna(inplace=False)) != 0:
+temp_df = curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=rsi_days)][['date','rsi']].dropna(inplace=False).reset_index()
+if len(temp_df[temp_df['rsi'] > 70]) != 0:
     rsi_container.write(f'RSI has been above 70 in the last {rsi_days} days, indicating that the asset is overbought. Overbought assets are likely to experience a price decline in the near future.')
 
-if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=rsi_days)][curr_data['rsi'] < 30].dropna(inplace=False)) != 0:
+if len(temp_df[temp_df['rsi'] < 30]) != 0:
     rsi_container.write(f'RSI has been below 30 in the last {rsi_days} days, indicating that the asset is oversold. Oversold assets are likely to experience a price increase in the near future.')
 
-if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=rsi_days)][curr_data['rsi'] < 30].dropna(inplace=False)) == 0 and len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['rsi'] > 70].dropna(inplace=False)) == 0:
+if len(temp_df[temp_df['rsi'] < 30]) == 0 and len(temp_df[temp_df['rsi'] > 70]) == 0:
     rsi_container.write(f'RSI has been between 30 and 70 in the last {rsi_days} days, indicating that the asset is neither overbought nor oversold. No clear trading signal is given.')
 
     
 # Stochastic Oscillator based prdeictions
-if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=osc_days)][curr_data['stoch_slowk'] > 70].dropna(inplace=False)) != 0 or len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['stoch_slowd'] > 70].dropna(inplace=False)) != 0:
+temp_df = curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=osc_days)][['date','stoch_slowk', 'stoch_slowd']].dropna(inplace=False).reset_index()
+
+if len(temp_df[temp_df['stoch_slowk'] > 70]) != 0 or len(temp_df[temp_df['stoch_slowd'] > 70]) != 0:
     osc_container.write(f'Fast and/or slow stochastic oscillator have been above 70 in the last {osc_days} days, indicating that the asset is overbought. Overbought assets are likely to experience a price decline in the near future.')
 
-if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=osc_days)][curr_data['stoch_slowk'] < 30].dropna(inplace=False)) != 0 or len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['stoch_slowd'] < 30].dropna(inplace=False)) != 0:
+if len(temp_df[temp_df['stoch_slowk'] < 30]) != 0 or len(temp_df[temp_df['stoch_slowd'] < 30]) != 0:
     osc_container.write(f'Fast and/or slow stochastic oscillator have been below 30 in the last {osc_days} days, indicating that the asset is oversold. Oversold assets are likely to experience a price increase in the near future.')
 
-if len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=osc_days)][curr_data['stoch_slowk'] > 70].dropna(inplace=False)) == 0 and len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['stoch_slowd'] > 70].dropna(inplace=False)) == 0 and len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['stoch_slowk'] < 30].dropna(inplace=False)) == 0 and len(curr_data[curr_data['date'] >= datetime.today().date() - timedelta(days=20)][curr_data['stoch_slowd'] < 30].dropna(inplace=False)) == 0:
+if len(temp_df[temp_df['stoch_slowk'] > 70]) == 0 and len(temp_df[temp_df['stoch_slowd'] > 70]) == 0 and len(temp_df[temp_df['stoch_slowk'] < 30]) == 0 and len(temp_df[temp_df['stoch_slowd'] < 30]) == 0:
     osc_container.write(f'Fast and slow stochastic oscillator have been between 30 and 70 in the last {osc_days} days, indicating that the asset is neither overbought nor oversold. No clear trading signal is given.')
 
 
