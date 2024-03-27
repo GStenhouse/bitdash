@@ -2,10 +2,9 @@ psycopg2-binary
 datetime
 alpha_vantage
 pandas
-matplotlib.pyplot
-plotly.express
-plotly.graph_objects
+matplotlib
+plotly
 seaborn
 numpy
 streamlit
-streamlit_extras.stylable_container 
+streamlit_extras 
