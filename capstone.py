@@ -69,7 +69,6 @@ def get_data():
     return dataframe
 
 # function to identify when SMA lines cross each other
-@st.cache_data
 def sma_cross(s_day, l_day, n_days, data):
     # get data for last number of specified days
     temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','sma_20d', 'sma_50d', 'sma_100d', 'sma_200d']].dropna(inplace=False).reset_index()
@@ -100,8 +99,7 @@ def sma_cross(s_day, l_day, n_days, data):
         sma_container.write(f'day {s_day} and day {l_day} SMAs have not crossed in the last {n_days} days.')
 
 
-# function to identify when SMA lines cross each other
-@st.cache_data
+# function to identify when EMA lines cross each other
 def ema_cross(s_day, l_day, n_days, data):
     # get data for last number of specified days
     temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','ema_9d', 'ema_12d', 'ema_26d']].dropna(inplace=False).reset_index()
