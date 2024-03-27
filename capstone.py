@@ -71,7 +71,7 @@ def get_data():
 # function to identify when SMA lines cross each other
 def sma_cross(s_day, l_day, n_days, data):
     # get data for last number of specified days
-    temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','sma_20d', 'sma_50d', 'sma_100d', 'sma_200d']].dropna(inplace=False).reset_index()
+    temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','sma_20d', 'sma_50d', 'sma_100d', 'sma_200d']].dropna(inplace=False)
 
     # set up counts and lists
     diff = []
@@ -102,7 +102,7 @@ def sma_cross(s_day, l_day, n_days, data):
 # function to identify when EMA lines cross each other
 def ema_cross(s_day, l_day, n_days, data):
     # get data for last number of specified days
-    temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','ema_9d', 'ema_12d', 'ema_26d']].dropna(inplace=False).reset_index()
+    temp_df = data[data['date'] >= datetime.today().date() - timedelta(days=n_days)][['date','ema_9d', 'ema_12d', 'ema_26d']].dropna(inplace=False)
 
     # set up counts and lists
     diff = []
