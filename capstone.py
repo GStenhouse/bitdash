@@ -56,15 +56,11 @@ def load_config(filename='config.ini', section='postgresql'):
 # set database configuration - cached
 @st.cache_data
 def set_db_config():
-    #db_config = {
-    #   'dbname': st.secrets['database'],
-    #  'user': st.secrets['user'],
-    # 'password': st.secrets['password'],
-        #'host': st.secrets['host']}
-
-    config = load_config()
-    included_keys = ['host', 'database', 'user', 'password']
-    db_config = {k:v for k,v in config.items() if k in included_keys}
+    db_config = {
+        'dbname': st.secrets['database'],
+        'user': st.secrets['user'],
+        'password': st.secrets['password'],
+        'host': st.secrets['host']}
 
     return config, db_config
 
@@ -110,16 +106,15 @@ latest_date = get_latest_date()
 # if latest date is not today, update database with latest data
 if latest_date.strftime('%Y-%m-%d') != datetime.today().strftime('%Y-%m-%d'):
     # get data from Alpha Vantage API
-    # api_key = st.secrets['alphavantage_api_key']
     print('Database not up to date')
     print('Collecting data...')
-    api_key = config['alphavantage_api_key']
+    api_key = st.secrets['alphavantage_api_key']
+    # set up API connection and function
     crypt_class = CryptoCurrencies(key=api_key, output_format='pandas')
-
     ti_class = TechIndicators(key=api_key, output_format='pandas')
-
+    
+    # download data
     btc_data = crypt_class.get_digital_currency_daily(symbol='BTC', market='GBP')[0]
-
     ti_data = pd.DataFrame()  # create an empty dataframe to store the technical indicators
 
     # Relative strength index
@@ -182,9 +177,8 @@ else:
     pass
 
 
-# Once database is definitely up to date, cache data
+# Once database is definitely up to date, cache data - sort by date
 curr_data = get_data()
-
 curr_data = curr_data.sort_values('date', ascending = True)
 
 ##################
@@ -235,13 +229,10 @@ with st.container(border = True):
     col1, col2, col3, col4 = st.columns(4)
     with col1: 
         open = st.checkbox('Show open price', value = True)
-
     with col2: 
         close = st.checkbox('Show close price')
-
     with col3: 
         high = st.checkbox('Show high price')
-
     with col4:
         low = st.checkbox('Show low price')
 
