@@ -228,7 +228,7 @@ curr_data = curr_data.sort_values('date', ascending = True)
 # show latest update on the app
 st.write("Updated: ", latest_date)
 
-st.title('Bitcoin Trading Dashboard')
+st.title('**BitDash**')
 
 ## Add disclaimer banner
 with stylable_container(key = "disclaimer",
