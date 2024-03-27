@@ -34,24 +34,6 @@ st.set_page_config(page_title = "Charts", layout="wide")
 #############
 # Functions #
 #############
-## Found on the internet and not original code
-# Load database credentials from database.ini file
-# check that config file has postgreSQL credentials section
-# Load credentials into a dictionary
-def load_config(filename='config.ini', section='postgresql'):
-    parser = ConfigParser()
-    parser.read(filename)
-
-    # get section, default to postgresql
-    config = {}
-    if parser.has_section(section):
-        params = parser.items(section)
-        for param in params:
-            config[param[0]] = param[1]
-    else:
-        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
-
-    return config
 
 # set database configuration - cached
 @st.cache_data
@@ -61,8 +43,7 @@ def set_db_config():
         'user': st.secrets['user'],
         'password': st.secrets['password'],
         'host': st.secrets['host']}
-
-    return config, db_config
+    return db_config
 
 
 # Connect to database and get latest data from database - cached
@@ -96,9 +77,7 @@ def get_data():
 # set database configuration
 from configparser import ConfigParser
 
-config = set_db_config()
-db_config = config[1]
-config = config[0]
+db_config = set_db_config()
 
 # connect to database and get latest data from database
 latest_date = get_latest_date()
